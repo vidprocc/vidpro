@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+  <style>
+    .play-icon {
+      fill: #0066CC;
+    }
+    .text {
+      font-family: Arial, sans-serif;
+      font-size: 32px;
+      font-weight: bold;
+      fill: #0066CC;
+    }
+  </style>
+  
+  <!-- YouTube-style play button icon in blue -->
+  <rect x="10" y="10" width="40" height="40" rx="10" ry="10" class="play-icon"/>
+  <polygon points="22,20 22,40 38,30" fill="white"/>
+  
+  <!-- VidPro text in blue -->
+  <text x="60" y="40" class="text">VidPro</text>
+</svg>

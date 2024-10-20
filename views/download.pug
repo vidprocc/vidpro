@@ -1,0 +1,202 @@
+extends layout/layout
+
+append head
+  link(href="https://cdn.datatables.net/v/bs5/dt-2.1.2/b-3.1.0/b-html5-3.1.0/b-print-3.1.0/fc-5.0.1/sl-2.0.3/datatables.min.css" rel="stylesheet")
+
+block content
+  .page-body
+    .container-xl
+      .col-12
+        .card
+          .card-header
+            button#addLinkBtn.btn.btn-primary Add Link
+          .table-responsive
+            table#tftg-table.table.card-table.table-vcenter.text-nowrap.datatable
+              thead
+                tr
+                  th Title
+                  th Url
+                  th Status
+                  th Actions
+
+append js
+  script(src="/dist/libs/fslightbox/index.js?1692870487")
+  script(src="https://cdn.datatables.net/v/bs5/dt-2.1.2/b-3.1.0/b-html5-3.1.0/b-print-3.1.0/fc-5.0.1/sl-2.0.3/datatables.min.js")
+  script.
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM fully loaded and parsed');
+
+      const numberElements = document.querySelectorAll('.number');
+      
+      numberElements.forEach(element => {
+        const originalNumber = parseFloat(element.textContent);
+        const formattedNumber = originalNumber.toLocaleString();
+        element.textContent = formattedNumber;
+      });
+
+      let table;
+      const addLinkBtn = document.getElementById('addLinkBtn');
+      console.log('Add Link button:', addLinkBtn);
+
+      function initializeTable() {
+        console.log('Initializing table');
+        if (table) {
+          table.destroy();
+        }
+
+        let tableOptions = {
+          select: true,
+          ajax: {
+          url: "/api/downloads",
+          dataSrc: function(json) {
+            console.log('Received data:', json);
+            if (!json.data) {
+              console.error('No data property in response');
+              return [];
+            }
+            return json.data;
+          },
+            error: function(xhr, error, thrown) {
+              console.error('Error loading data:', error);
+              bootbox.alert('Error loading data. Please try again later.');
+            }
+          },
+          serverSide: true,
+          fixedColumns: {
+            start: 0,
+            end: 1
+          },
+          "processing": true,
+          scrollCollapse: true,
+          scrollX: true,
+          drawCallback: function(settings) {
+            console.log('Data loading complete!');
+            if (typeof refreshFsLightbox === 'function') {
+              refreshFsLightbox();
+            }
+          },
+          columns: [
+            {
+              data: 'title',
+              orderable: false
+            },
+            {
+              data: 'url',
+              orderable: false
+            },
+            {
+              data: 'status',
+            },
+            {
+              "data": null,
+              orderable: false,
+              render: function (data, type, row) {
+                let buttons = '<div class="btn-group btn-group-sm" role="group" aria-label="Actions">';
+                buttons += '<button type="button" class="btn btn-danger btn-delete">Delete</button>';
+                buttons += '</div>';
+                return buttons;
+              }
+            }
+          ]
+        };
+
+        table = new DataTable('#tftg-table', tableOptions);
+
+        table.on('xhr', function() {
+          var json = table.ajax.json();
+          console.log('Ajax event fired, received data:', json);
+        });
+
+        table.on('error.dt', function(e, settings, techNote, message) {
+          console.error('DataTables error:', message);
+        });
+      }
+
+      if (addLinkBtn) {
+        addLinkBtn.addEventListener('click', function() {
+          bootbox.dialog({
+            title: 'Add Link',
+            message: `
+              <form id="addLinkForm">
+                <div class="form-group mb-3">
+                  <label for="linkTitle" class="form-label">Title</label>
+                  <input type="text" class="form-control" id="linkTitle" required>
+                </div>
+                <div class="form-group mb-3">
+                  <label for="linkUrl" class="form-label">URL</label>
+                  <input type="url" class="form-control" id="linkUrl" required>
+                </div>
+              </form>
+            `,
+            buttons: {
+              cancel: {
+                label: 'Cancel',
+                className: 'btn-secondary'
+              },
+              confirm: {
+                label: 'Add',
+                className: 'btn-primary',
+                callback: function() {
+                  const title = document.getElementById('linkTitle').value.trim();
+                  const url = document.getElementById('linkUrl').value.trim();
+                  if (!title || !url) {
+                    bootbox.alert('Please fill in both title and URL');
+                    return false;
+                  }
+                  $.ajax({
+                    url: '/api/downloads',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ title, url }),
+                    success: function(response) {
+                      if (response.success) {
+                        table.ajax.reload();
+                        bootbox.alert('Link added successfully!');
+                      } else {
+                        bootbox.alert('Error adding link: ' + (response.message || 'Unknown error'));
+                      }
+                    },
+                    error: function(xhr, status, error) {
+                      console.error('Error adding link:', error);
+                      bootbox.alert('Error adding link. Please try again later.');
+                    }
+                  });
+                  return true;
+                }
+              }
+            }
+          });
+        });
+      } else {
+        console.error('Add Link button not found');
+      }
+
+      // Initialize the table
+      initializeTable();
+
+      $('#tftg-table').on('click', '.btn-delete', function () {
+        let row = table.row($(this).parents('tr'));
+        let data = row.data();
+        let linkId = data._id;
+        bootbox.confirm('Are you sure you want to delete this link?', function(result) {
+          if(result) {
+            $.ajax({
+              url: `/api/downloads?id=${linkId}`,
+              type: 'DELETE',
+              success: function (result) {
+                if(result.success) {
+                  row.remove().draw(false);
+                  bootbox.alert('Link deleted successfully');
+                } else {
+                  bootbox.alert('Error deleting link: ' + (result.message || 'Unknown error'));
+                }
+              },
+              error: function (xhr, status, error) {
+                console.error('Error deleting link:', error);
+                bootbox.alert(`Error deleting link. Please try again later.`);
+              }
+            });
+          }
+        });
+      });
+    });
