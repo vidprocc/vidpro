@@ -9,7 +9,7 @@ VidPro is a comprehensive cloud-based video processing solution offering a wide 
 3. Thumbnail Generation: Automatically create attractive thumbnails and preview images.
 4. Preview Video Creation: Generate compact, high-quality preview videos as an efficient alternative to GIF covers.
 5. Cover Image and Screenshot Generation: Produce static images for various promotional and preview purposes.
-6. M3U8 Support: Create HLS (HTTP Live Streaming) M3U8 playlists for adaptive bitrate streaming.
+6. M3U8 Support: Create HLS M3U8 playlists for adaptive bitrate streaming.
 7. Online Preview: Serve processed MP4 videos, thumbnails, preview videos, screenshots, and M3U8 streams directly for web use.
 8. Resumable Video Upload: resumable file uploads Tus resumable upload protocol in Node.js.
 9. Telegram Bot Integration: Download videos from Telegram channels or chats, process them with VidPro, and receive generated media and links directly in Telegram.
